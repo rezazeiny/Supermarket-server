@@ -6,8 +6,8 @@ class User(models.Model):
     first_name = models.CharField(max_length=1000)
     last_name = models.CharField(max_length=1000)
     email = models.CharField(max_length=1000)
-    user_name = models.CharField(max_length=1000)
-    password = models.CharField(max_length=1000)
+    user_name = models.CharField(max_length=1000, unique=True, blank=False)
+    password = models.CharField(max_length=1000, blank=False)
 
     # class Meta:
     #     ordering = ('created',)
