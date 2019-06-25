@@ -19,3 +19,21 @@ class MarketFullAdd(generics.CreateAPIView):
 class MarketList(generics.ListCreateAPIView):
     queryset = Market.objects.all()
     serializer_class = MarketSerializer
+
+
+class ProductList(generics.ListCreateAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+
+
+class ProductAdd(generics.CreateAPIView):
+    serializer_class = ProductSerializer
+
+
+class RoleList(generics.ListCreateAPIView):
+    queryset = Role.objects.all()
+    serializer_class = RoleSerializer
+
+
+class RoleAdd(generics.CreateAPIView):
+    serializer_class = RoleSerializer

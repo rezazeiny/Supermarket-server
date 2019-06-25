@@ -6,6 +6,7 @@ class Market(models.Model):
     address = models.CharField(max_length=1000)
     phone_number = models.CharField(max_length=20)
     owner = models.CharField(max_length=1000, blank=False)
+
     # image = models.ImageField()
     # class Meta:
     #     ordering = ('created',)
@@ -25,3 +26,54 @@ class Market(models.Model):
     #
     def __str__(self):
         return self.name + " " + self.owner
+
+
+class Product(models.Model):
+    name = models.CharField(max_length=1000, unique=True, blank=False)
+    amount = models.CharField(max_length=10)
+    price = models.CharField(max_length=20, blank=False)
+
+    # image = models.ImageField()
+    # class Meta:
+    #     ordering = ('created',)
+
+    #     abstract = True
+
+    # def save(self, *args, **kwargs):  # new
+    #     """
+    #     Use the `pygments` library to create a highlighted HTML
+    #     representation of the code snippet.
+    #     """
+    # options = {'user_name': self.user_name} if self.user_name else {}
+    # formatter = HtmlFormatter(style=self.style, linenos=linenos,
+    #                           full=True, **options)
+    # self.highlighted = highlight(self.code, lexer, formatter)
+    # super(Snippet, self).save(*args, **kwargs)
+    #
+    def __str__(self):
+        return self.name + " " + self.amount
+
+
+class Role(models.Model):
+    name = models.CharField(max_length=1000, unique=True, blank=False)
+    role = models.CharField(max_length=100)
+
+    # image = models.ImageField()
+    # class Meta:
+    #     ordering = ('created',)
+
+    #     abstract = True
+
+    # def save(self, *args, **kwargs):  # new
+    #     """
+    #     Use the `pygments` library to create a highlighted HTML
+    #     representation of the code snippet.
+    #     """
+    # options = {'user_name': self.user_name} if self.user_name else {}
+    # formatter = HtmlFormatter(style=self.style, linenos=linenos,
+    #                           full=True, **options)
+    # self.highlighted = highlight(self.code, lexer, formatter)
+    # super(Snippet, self).save(*args, **kwargs)
+    #
+    def __str__(self):
+        return self.name + " " + self.amount
