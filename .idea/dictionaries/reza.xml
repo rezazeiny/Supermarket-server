@@ -1,7 +1,10 @@
 <component name="ProjectDictionaryState">
   <dictionary name="reza">
     <words>
+      <w>csrfmiddlewaretoken</w>
       <w>djongo</w>
+      <w>postgresql</w>
+      <w>supermarketuser</w>
     </words>
   </dictionary>
 </component>
