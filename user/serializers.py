@@ -24,8 +24,14 @@ class ProfilePage(serializers.ModelSerializer):
 class ShowProfile(serializers.ModelSerializer):
     class Meta:
         model = User
+        fields = ('user_name', 'api')
+
+
+class ChangeProfilePage(serializers.ModelSerializer):
+    class Meta:
+        model = User
         fields = (
-            'user_name', 'api')
+            'user_name', 'email', 'first_name', 'last_name', 'phone_number', 'api')
 
 
 class ProfileSummery(serializers.ModelSerializer):

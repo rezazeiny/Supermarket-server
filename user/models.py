@@ -1,47 +1,62 @@
 from django.db import models
 
-from market.models import Market
-
-from market_models.models import Model
-import sys
-
-
-class MarketRate(models.Model):
-    market = models.ForeignKey(Market, on_delete=models.CASCADE)
-    star = models.PositiveSmallIntegerField(default=0)
-
-
-class ModelRate(models.Model):
-    model = models.ForeignKey(Model, on_delete=models.CASCADE)
-    star = models.PositiveSmallIntegerField(default=0)
-
 
 class User(models.Model):
-    email = models.EmailField(max_length=125, unique=True, blank=True)
+    email = models.EmailField(max_length=125, blank=True, default="")
     user_name = models.CharField(max_length=125, unique=True, blank=False)
-    password = models.CharField(max_length=125, blank=False)
-    first_name = models.CharField(max_length=125, blank=True)
-    last_name = models.CharField(max_length=125, blank=True)
-    email_validation = models.BooleanField(default=False)
-    email_random = models.CharField(max_length=6, blank=True)
-    forgot_password_random = models.CharField(max_length=6, blank=True)
-    image = models.ImageField(upload_to="user_image/", blank=True)
-    phone_number = models.CharField(max_length=20, unique=True, blank=True)
-    phone_validation = models.BooleanField(default=False)
-    phone_random = models.CharField(max_length=6, blank=True)
+    password = models.CharField(max_length=125, blank=False, null=False)
+    first_name = models.CharField(max_length=125, blank=True, default="")
+    last_name = models.CharField(max_length=125, blank=True, default="")
+    email_validation = models.BooleanField(blank=False, default=False)
+    email_random = models.CharField(max_length=6, blank=True, default="")
+    forgot_password_random = models.CharField(max_length=6, blank=True, default="")
+    image = models.ImageField(upload_to="user_image/", blank=True, default="default_user_image.jpg")
+    phone_number = models.CharField(max_length=20, blank=True, default="")
+    phone_validation = models.BooleanField(blank=False, default=False)
+    phone_random = models.CharField(max_length=6, blank=True, default="")
     register_data = models.DateTimeField(auto_now_add=True)
     last_edit_data = models.DateTimeField(auto_now=True)
-    api = models.CharField(max_length=65, blank=True)
+    api = models.CharField(max_length=65, blank=True, default="")
     api_expire_data = models.DateTimeField(blank=True, null=True)
     last_login = models.DateTimeField(blank=True, null=True)
-    market_list = models.ManyToManyField(Market, blank=True)
-
-    market_rate_list = models.ManyToManyField(MarketRate, blank=True)
-    model_rate_list = models.ManyToManyField(ModelRate, blank=True)
 
     def __str__(self):
         return self.user_name
 
-    # def save(self, *args, **kwargs):
-    #     print("################################salam######################", file=sys.stderr)
-    #     super(User, self).save(*args, **kwargs)
+
+class MarketRate(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    star = models.PositiveSmallIntegerField(default=0)
+    register_data = models.DateTimeField(auto_now_add=True)
+    last_edit_data = models.DateTimeField(auto_now=True)
+
+
+class MarketComment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    comment = models.CharField(max_length=5000, blank=True, default="")
+    register_data = models.DateTimeField(auto_now_add=True)
+    last_edit_data = models.DateTimeField(auto_now=True)
+
+
+class ModelRate(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    star = models.PositiveSmallIntegerField(default=0)
+    register_data = models.DateTimeField(auto_now_add=True)
+    last_edit_data = models.DateTimeField(auto_now=True)
+
+
+class ModelComment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    comment = models.CharField(max_length=5000, blank=True, default="")
+    register_data = models.DateTimeField(auto_now_add=True)
+    last_edit_data = models.DateTimeField(auto_now=True)
+
+
+class RoleMarket(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    role = models.CharField(max_length=125)
+    register_data = models.DateTimeField(auto_now_add=True)
+    last_edit_data = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.user.user_name + ": " + self.role
