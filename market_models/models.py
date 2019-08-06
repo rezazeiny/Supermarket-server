@@ -6,6 +6,7 @@ from user.models import User, ModelRate, ModelComment
 
 class Model(models.Model):
     product_name = models.CharField(max_length=125, blank=False)
+    category = models.CharField(max_length=125, blank=False, default="")
     description = models.CharField(max_length=5000, blank=True, default="")
     price = models.IntegerField(blank=False)
     count = models.IntegerField(blank=False)

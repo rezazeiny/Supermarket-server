@@ -29,7 +29,8 @@ class ModelAdd(generics.CreateAPIView):
                 data = {'error': "You are not owner."}
                 return Response(data, status=status.HTTP_503_SERVICE_UNAVAILABLE)
             model = Model.objects.create(market=market[0], owner=user[0], product_name=data['product_name'],
-                                         description=data['description'], count=data['count'], price=data['price'])
+                                         description=data['description'], count=data['count'], price=data['price'],
+                                         category=data['category'])
             model.save()
             del data['api']
             return Response(data, status=status.HTTP_201_CREATED)
@@ -43,7 +44,7 @@ class ModelAdd(generics.CreateAPIView):
 
 class ModelSearchByName(generics.CreateAPIView):
     # queryset = User.objects.all()
-    serializer_class = ModelSerializerForSearch
+    serializer_class = ModelSerializerForSearchByName
 
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
@@ -56,6 +57,34 @@ class ModelSearchByName(generics.CreateAPIView):
         for i in range(len(all_models)):
             model = {
                 'id': all_models[i].id,
+                'category': all_models[i].category,
+                'product_name': all_models[i].product_name,
+                'image': all_models[i].image.url,
+                'rates_result': all_models[i].rates_result,
+                'price': all_models[i].price,
+                'count': all_models[i].count,
+            }
+            data['models'].append(model)
+
+        return Response(data, status=status.HTTP_201_CREATED)
+
+
+class ModelSearchByCategory(generics.CreateAPIView):
+    # queryset = User.objects.all()
+    serializer_class = ModelSerializerForSearchByCategory
+
+    def create(self, request, *args, **kwargs):
+        data = request.data.copy()
+        print(data, file=sys.stderr)
+        all_models = Model.objects.filter(category__contains=data['category'], market_id=data['market'])
+        if 'csrfmiddlewaretoken' in data.keys():
+            del data['csrfmiddlewaretoken']
+        data['models'] = []
+
+        for i in range(len(all_models)):
+            model = {
+                'id': all_models[i].id,
+                'category': all_models[i].category,
                 'product_name': all_models[i].product_name,
                 'image': all_models[i].image.url,
                 'rates_result': all_models[i].rates_result,
@@ -219,9 +248,9 @@ class ModelShowDetail(generics.CreateAPIView):
         if len(model) == 1:
             comments = model[0].comments.all()
             rates = model[0].rates.all()
-
             data['market_name'] = model[0].market.market_name
             data['description'] = model[0].description
+            data['category'] = model[0].category
             data['price'] = model[0].price
             data['count'] = model[0].count
             data['image'] = model[0].image.url

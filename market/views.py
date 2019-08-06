@@ -286,6 +286,7 @@ class MarketShowDetail(generics.CreateAPIView):
                 model = {
                     'id': models[i].id,
                     'product_name': models[i].product_name,
+                    'category': models[i].category,
                     'image': models[i].image.url,
                     'price': models[i].price,
                     'count': models[i].count,

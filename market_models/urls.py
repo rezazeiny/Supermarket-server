@@ -5,6 +5,7 @@ from . import views
 
 urlpatterns = [
     path('menu/search/name/', views.ModelSearchByName.as_view()),
+    path('menu/search/category/', views.ModelSearchByCategory.as_view()),
     path('add/', views.ModelAdd.as_view()),
     path('rate/', views.ModelRate.as_view()),
     path('rate/list/', views.ModelShowRates.as_view()),
