@@ -11,6 +11,8 @@ urlpatterns = [
     path('rate/list/', views.MarketShowRates.as_view()),
     path('comment/', views.MarketComment.as_view()),
     path('comment/list/', views.MarketShowComments.as_view()),
+    path('rule/', views.MarketComment.as_view()),
+    path('rule/list/', views.MarketShowComments.as_view()),
     path('detail/', views.MarketShowDetail.as_view()),
 ]
 

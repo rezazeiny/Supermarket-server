@@ -232,6 +232,79 @@ class MarketShowComments(generics.CreateAPIView):
             return Response(data, status=status.HTTP_404_NOT_FOUND)
 
 
+##############################################
+# rule
+##############################################
+
+class MarketRule(generics.CreateAPIView):
+    # queryset = User.objects.all()
+    serializer_class = MarketSerializerForUser
+
+    def create(self, request, *args, **kwargs):
+        data = request.data.copy()
+        print(data, file=sys.stderr)
+        market = Market.objects.filter(id=data['id'])
+        user = User.objects.filter(id=data['owner'])
+        if 'csrfmiddlewaretoken' in data.keys():
+            del data['csrfmiddlewaretoken']
+        if 'api' not in data.keys():
+            data = {'error': "Miss API."}
+            return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+        if len(user) == 1 and user[0].api == data['api'] and len(market) == 1 and len(data['rule']) >= 4:
+            if len(market[0].rules.filter(user=user[0])) > 0:
+                data = {'error': "You can not add rule again."}
+                return Response(data, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            market[0].rules.create(user=user[0], role=data['rule'])
+            # market[0].comments_count += 1
+            market[0].save()
+            del data['api']
+            return Response(data, status=status.HTTP_201_CREATED)
+        elif len(user) == 1 and len(market) == 1:
+            data = {'error': "Invalid API."}
+            return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+        elif len(user) == 1 and len(market) == 0:
+            data = {'error': "Market Not Fount."}
+            return Response(data, status=status.HTTP_404_NOT_FOUND)
+        elif len(user) == 0 and len(market) == 1:
+            data = {'error': "User Not Found."}
+            return Response(data, status=status.HTTP_404_NOT_FOUND)
+        elif len(data['comment']) < 4:
+            data = {'error': "Comment can not empty."}
+            return Response(data, status=status.HTTP_417_EXPECTATION_FAILED)
+        else:
+            data = {'error': "Error."}
+            return Response(data, status=status.HTTP_404_NOT_FOUND)
+
+
+class MarketShowRules(generics.CreateAPIView):
+    # queryset = User.objects.all()
+    serializer_class = MarketSerializerForID
+
+    def create(self, request, *args, **kwargs):
+        data = request.data.copy()
+        print(data, file=sys.stderr)
+        market = Market.objects.filter(id=data['id'])
+        if 'csrfmiddlewaretoken' in data.keys():
+            del data['csrfmiddlewaretoken']
+        if len(market) == 1:
+            rules = market[0].rules.all()
+            # data['comments_count'] = market[0].comments_count
+            data['rules'] = []
+
+            for i in range(len(rules)):
+                rule = {
+                    'id': rules[i].user.id,
+                    'user_name': rules[i].user.user_name,
+                    'rule': rules[i].role,
+                    'date': rules[i].register_data,
+                }
+                data['rules'].append(rule)
+            return Response(data, status=status.HTTP_201_CREATED)
+        else:
+            data = {'error': "Market Not Found."}
+            return Response(data, status=status.HTTP_404_NOT_FOUND)
+
+
 class MarketShowDetail(generics.CreateAPIView):
     # queryset = User.objects.all()
     serializer_class = MarketSerializerForID
@@ -244,6 +317,7 @@ class MarketShowDetail(generics.CreateAPIView):
             del data['csrfmiddlewaretoken']
         if len(market) == 1:
             comments = market[0].comments.all()
+            rules = market[0].rules.all()
             rates = market[0].rates.all()
             models = Model.objects.filter(market=market[0].id)
 
@@ -264,6 +338,7 @@ class MarketShowDetail(generics.CreateAPIView):
             data['rates_count'] = market[0].rates_count
             data['rates'] = []
             data['models'] = []
+            data['rules'] = []
 
             for i in range(len(comments)):
                 comment = {
@@ -273,6 +348,15 @@ class MarketShowDetail(generics.CreateAPIView):
                     'date': comments[i].register_data,
                 }
                 data['comments'].append(comment)
+
+            for i in range(len(rules)):
+                rule = {
+                    'id': rules[i].user.id,
+                    'user_name': rules[i].user.user_name,
+                    'rule': rules[i].role,
+                    'date': rules[i].register_data,
+                }
+                data['rules'].append(rule)
 
             for i in range(len(rates)):
                 rate = {
