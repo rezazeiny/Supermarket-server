@@ -40,6 +40,24 @@ class UserSerializerForCheckValidatePhone(serializers.ModelSerializer):
         fields = ('user_name', 'phone_random', 'api')
 
 
+class UserSerializerForForgotValidate(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('user_name', 'forgot_password_random',)
+
+
+class UserSerializerForForgot(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('user_name',)
+
+
+class UserSerializerForForgotPass(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('user_name', 'password',)
+
+
 class UserSerializerForCheckValidateEmail(serializers.ModelSerializer):
     class Meta:
         model = User

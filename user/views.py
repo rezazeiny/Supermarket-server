@@ -214,7 +214,7 @@ class ChangeProfilePage(generics.CreateAPIView):
         user = User.objects.filter(user_name=data['user_name'])
         if len(user) == 1 and user[0].api == data['api']:
             if validate_email(data['email']):
-                rand = id_generator(5, string.digits)
+                rand = id_generator(6, string.digits)
                 if user[0].email != data['email']:
                     user[0].email_validation = False
                     send_mail(data['email'], rand)
@@ -223,7 +223,7 @@ class ChangeProfilePage(generics.CreateAPIView):
                     send_mail(data['email'], rand)
                     user[0].email_random = rand
             if len(data['phone_number']) == 11:
-                rand = id_generator(5, string.digits)
+                rand = id_generator(6, string.digits)
                 if user[0].phone_number != data['phone_number']:
                     user[0].phone_validation = False
                     send_sms(data['phone_number'], rand)
@@ -311,6 +311,66 @@ class CheckValidateEmail(generics.CreateAPIView):
             return Response(data, status=status.HTTP_404_NOT_FOUND)
 
 
+class ForgotPassCheck(generics.CreateAPIView):
+    serializer_class = UserSerializerForForgotValidate
+
+    def create(self, request, *args, **kwargs):
+        print(request.data, file=sys.stderr)
+        data = request.data.copy()
+        if 'csrfmiddlewaretoken' in data.keys():
+            del data['csrfmiddlewaretoken']
+        user = User.objects.filter(user_name=data['user_name'])
+        if len(user) == 1 and user[0].forgot_password_random == data['forgot_password_random'] and \
+                (user[0].phone_validation or user[0].email_validation):
+            data['forgot_password_random'] = True
+            user[0].forgot_password_random = "-1"
+            user[0].save()
+            return Response(data, status=status.HTTP_201_CREATED)
+        elif len(user) == 1 and user[0].forgot_password_random != data['forgot_password_random']:
+            data = {'error': "Invalid Code."}
+            return Response(data, status=status.HTTP_417_EXPECTATION_FAILED)
+        elif len(user) == 1 and not user[0].phone_validation and not user[0].email_validation:
+            data = {'error': "You have not any activation way."}
+            return Response(data, status=status.HTTP_417_EXPECTATION_FAILED)
+        elif len(user) == 1:
+            data = {'error': "Invalid Error."}
+            return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            data = {'error': "Your user not found."}
+            return Response(data, status=status.HTTP_404_NOT_FOUND)
+
+
+class ForgotPassPhone(generics.CreateAPIView):
+    # queryset = User.objects.all()
+    serializer_class = UserSerializerForForgot
+
+    def create(self, request, *args, **kwargs):
+        # print(request.data, file=sys.stderr)
+        data = request.data.copy()
+        if 'csrfmiddlewaretoken' in data.keys():
+            del data['csrfmiddlewaretoken']
+        user = User.objects.filter(user_name=data['user_name'])
+        if len(user) == 1 and user[0].phone_validation:
+            rand = id_generator(6, string.digits)
+            send_sms(user[0].phone_number, rand)
+            user[0].forgot_password_random = rand
+            user[0].save()
+            return Response(data, status=status.HTTP_201_CREATED)
+        elif len(user) == 1:
+            if len(user[0].phone_number) != 11:
+                data = {'error': "Phone number problem."}
+                return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+            if not user[0].phone_validation:
+                data = {'error': "Phone number not valid."}
+                return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+            data = {'error': "Invalid Error."}
+            return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            del data['user_name']
+            data['error'] = "Your user not found."
+            return Response(data, status=status.HTTP_404_NOT_FOUND)
+
+
 class SendSMS(generics.CreateAPIView):
     # queryset = User.objects.all()
     serializer_class = ShowProfile
@@ -326,7 +386,7 @@ class SendSMS(generics.CreateAPIView):
         user = User.objects.filter(user_name=data['user_name'])
         if len(user) == 1 and user[0].api == data['api'] and len(user[0].phone_number) == 11 and not user[
             0].phone_validation:
-            rand = id_generator(5, string.digits)
+            rand = id_generator(6, string.digits)
             send_sms(user[0].phone_number, rand)
             user[0].phone_random = rand
             user[0].save()
@@ -335,7 +395,7 @@ class SendSMS(generics.CreateAPIView):
             if len(user[0].phone_number) != 11:
                 data = {'error': "Phone number problem."}
                 return Response(data, status=status.HTTP_401_UNAUTHORIZED)
-            if len(user[0].phone_validation) != 11:
+            if user[0].phone_validation:
                 data = {'error': "Phone number is valid."}
                 return Response(data, status=status.HTTP_401_UNAUTHORIZED)
             data = {'error': "Invalid API."}
@@ -343,6 +403,37 @@ class SendSMS(generics.CreateAPIView):
         else:
             del data['user_name']
             del data['api']
+            data['error'] = "Your user not found."
+            return Response(data, status=status.HTTP_404_NOT_FOUND)
+
+
+class ForgotPassEmail(generics.CreateAPIView):
+    # queryset = User.objects.all()
+    serializer_class = UserSerializerForForgot
+
+    def create(self, request, *args, **kwargs):
+        # print(request.data, file=sys.stderr)
+        data = request.data.copy()
+        if 'csrfmiddlewaretoken' in data.keys():
+            del data['csrfmiddlewaretoken']
+        user = User.objects.filter(user_name=data['user_name'])
+        if len(user) == 1 and user[0].email_validation:
+            rand = id_generator(6, string.digits)
+            send_mail(user[0].email, rand)
+            user[0].forgot_password_random = rand
+            user[0].save()
+            return Response(data, status=status.HTTP_201_CREATED)
+        elif len(user) == 1:
+            if not validate_email(user[0].email):
+                data = {'error': "Email problem."}
+                return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+            if not user[0].email_validation:
+                data = {'error': "Email is not valid."}
+                return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+            data = {'error': "Invalid Error."}
+            return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            del data['user_name']
             data['error'] = "Your user not found."
             return Response(data, status=status.HTTP_404_NOT_FOUND)
 
@@ -362,7 +453,7 @@ class SendEmail(generics.CreateAPIView):
         user = User.objects.filter(user_name=data['user_name'])
         if len(user) == 1 and user[0].api == data['api'] and validate_email(user[0].email) and not user[
             0].email_validation:
-            rand = id_generator(5, string.digits)
+            rand = id_generator(6, string.digits)
             send_mail(user[0].email, rand)
             user[0].email_random = rand
             user[0].save()
@@ -371,14 +462,39 @@ class SendEmail(generics.CreateAPIView):
             if not validate_email(user[0].email):
                 data = {'error': "Email problem."}
                 return Response(data, status=status.HTTP_401_UNAUTHORIZED)
-            if len(user[0].email_validation) != 11:
+            if user[0].email_validation:
                 data = {'error': "Email is valid."}
                 return Response(data, status=status.HTTP_401_UNAUTHORIZED)
             data = {'error': "Invalid API."}
             return Response(data, status=status.HTTP_401_UNAUTHORIZED)
         else:
             del data['user_name']
-            del data['api']
+            data['error'] = "Your user not found."
+            return Response(data, status=status.HTTP_404_NOT_FOUND)
+
+
+class ForgotPassChange(generics.CreateAPIView):
+    # queryset = User.objects.all()
+    serializer_class = UserSerializerForForgotPass
+
+    def create(self, request, *args, **kwargs):
+        # print(request.data, file=sys.stderr)
+        data = request.data.copy()
+        if 'csrfmiddlewaretoken' in data.keys():
+            del data['csrfmiddlewaretoken']
+        user = User.objects.filter(user_name=data['user_name'])
+        if len(user) == 1 and len(data['password']) and user[
+            0].forgot_password_random == "-1":
+            user[0].password = data['password']
+            del data['password']
+            user[0].forgot_password_random = ""
+            user[0].save()
+            return Response(data, status=status.HTTP_201_CREATED)
+        elif len(data['password']) < 8:
+            data = {'error': "Your password length invalid."}
+            return Response(data, status=status.HTTP_451_UNAVAILABLE_FOR_LEGAL_REASONS)
+        else:
+            del data['user_name']
             data['error'] = "Your user not found."
             return Response(data, status=status.HTTP_404_NOT_FOUND)
 
