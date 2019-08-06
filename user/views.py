@@ -172,6 +172,9 @@ class ShowProfileUsername(generics.CreateAPIView):
         data = request.data.copy()
         if 'csrfmiddlewaretoken' in data.keys():
             del data['csrfmiddlewaretoken']
+        if 'api' not in data.keys():
+            data = {'error': "Miss API."}
+            return Response(data, status=status.HTTP_401_UNAUTHORIZED)
         user = User.objects.filter(user_name=data['user_name'])
         if len(user) == 1 and user[0].api == data['api']:
             data['id'] = user[0].id
@@ -182,7 +185,7 @@ class ShowProfileUsername(generics.CreateAPIView):
             data['phone_number'] = user[0].phone_number
             data['phone_validation'] = user[0].phone_validation
             data['image'] = user[0].image.url
-            return Response(data, status=status.HTTP_302_FOUND)
+            return Response(data, status=status.HTTP_201_CREATED)
         elif len(user) == 1:
             del data['user_name']
             del data['api']
@@ -204,43 +207,176 @@ class ChangeProfilePage(generics.CreateAPIView):
         data = request.data.copy()
         if 'csrfmiddlewaretoken' in data.keys():
             del data['csrfmiddlewaretoken']
+        if 'api' not in data.keys():
+            data = {'error': "Miss API."}
+            return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+
         user = User.objects.filter(user_name=data['user_name'])
         if len(user) == 1 and user[0].api == data['api']:
-            if user[0].email != data['email'] or (
-                    not user[0].email_validation and validate_email(data['email'])):
+            if validate_email(data['email']):
                 rand = id_generator(5, string.digits)
-                user[0].email_random = rand
-                send_mail(data['email'], rand)
+                if user[0].email != data['email']:
+                    user[0].email_validation = False
+                    send_mail(data['email'], rand)
+                    user[0].email_random = rand
+                elif not user[0].email_validation:
+                    send_mail(data['email'], rand)
+                    user[0].email_random = rand
+            if len(data['phone_number']) == 11:
+                rand = id_generator(5, string.digits)
+                if user[0].phone_number != data['phone_number']:
+                    user[0].phone_validation = False
+                    send_sms(data['phone_number'], rand)
+                    user[0].phone_random = rand
+                elif not user[0].phone_validation:
+                    send_sms(data['phone_number'], rand)
+                    user[0].phone_random = rand
 
             data['id'] = user[0].id
-            user[0].email = data['email']
             data['email_validation'] = user[0].email_validation
-            user[0].first_name = data['first_name']
-            user[0].last_name = data['last_name']
-            if user[0].phone_number != data['phone_number'] or (
-                    not user[0].phone_validation and len(user[0].phone_number) > 9):
-                rand = id_generator(5, string.digits)
-                user[0].phone_random = rand
-                send_sms(data['phone_number'], rand)
-            user[0].phone_number = data['phone_number']
             data['phone_validation'] = user[0].phone_validation
             data['image'] = user[0].image.url
+            user[0].email = data['email']
+            user[0].first_name = data['first_name']
+            user[0].last_name = data['last_name']
+            user[0].phone_number = data['phone_number']
             user[0].save()
-            return Response(data, status=status.HTTP_302_FOUND)
+            return Response(data, status=status.HTTP_201_CREATED)
         elif len(user) == 1:
-            del data['first_name']
-            del data['last_name']
-            del data['phone_number']
-            del data['email']
-            del data['user_name']
-            del data['api']
-            data['error'] = "Invalid API."
+            data = {'error': "Invalid API."}
             return Response(data, status=status.HTTP_401_UNAUTHORIZED)
         else:
-            del data['first_name']
-            del data['last_name']
-            del data['phone_number']
-            del data['email']
+            data = {'error': "Your user not found."}
+            return Response(data, status=status.HTTP_404_NOT_FOUND)
+
+
+class CheckValidatePhone(generics.CreateAPIView):
+    # queryset = User.objects.all()
+    serializer_class = UserSerializerForCheckValidatePhone
+
+    def create(self, request, *args, **kwargs):
+        print(request.data, file=sys.stderr)
+        data = request.data.copy()
+        if 'csrfmiddlewaretoken' in data.keys():
+            del data['csrfmiddlewaretoken']
+        if 'api' not in data.keys():
+            data = {'error': "Miss API."}
+            return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+
+        user = User.objects.filter(user_name=data['user_name'])
+        if len(user) == 1 and user[0].api == data['api'] and user[0].phone_random == data['phone_random']:
+            del data['api']
+            data['phone_validation'] = True
+            user[0].phone_validation = True
+            user[0].save()
+            return Response(data, status=status.HTTP_201_CREATED)
+        elif len(user) == 1 and user[0].phone_random != data['phone_random']:
+            data = {'error': "Invalid Code."}
+            return Response(data, status=status.HTTP_417_EXPECTATION_FAILED)
+        elif len(user) == 1:
+            data = {'error': "Invalid API."}
+            return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            data = {'error': "Your user not found."}
+            return Response(data, status=status.HTTP_404_NOT_FOUND)
+
+
+class CheckValidateEmail(generics.CreateAPIView):
+    serializer_class = UserSerializerForCheckValidateEmail
+
+    def create(self, request, *args, **kwargs):
+        print(request.data, file=sys.stderr)
+        data = request.data.copy()
+        if 'csrfmiddlewaretoken' in data.keys():
+            del data['csrfmiddlewaretoken']
+        if 'api' not in data.keys():
+            data = {'error': "Miss API."}
+            return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+
+        user = User.objects.filter(user_name=data['user_name'])
+        if len(user) == 1 and user[0].api == data['api'] and user[0].email_random == data['email_random']:
+            del data['api']
+            data['email_validation'] = True
+            user[0].email_validation = True
+            user[0].save()
+            return Response(data, status=status.HTTP_201_CREATED)
+        elif len(user) == 1 and user[0].email_random != data['email_random']:
+            data = {'error': "Invalid Code."}
+            return Response(data, status=status.HTTP_417_EXPECTATION_FAILED)
+        elif len(user) == 1:
+            data = {'error': "Invalid API."}
+            return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            data = {'error': "Your user not found."}
+            return Response(data, status=status.HTTP_404_NOT_FOUND)
+
+
+class SendSMS(generics.CreateAPIView):
+    # queryset = User.objects.all()
+    serializer_class = ShowProfile
+
+    def create(self, request, *args, **kwargs):
+        # print(request.data, file=sys.stderr)
+        data = request.data.copy()
+        if 'csrfmiddlewaretoken' in data.keys():
+            del data['csrfmiddlewaretoken']
+        if 'api' not in data.keys():
+            data = {'error': "Miss API."}
+            return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+        user = User.objects.filter(user_name=data['user_name'])
+        if len(user) == 1 and user[0].api == data['api'] and len(user[0].phone_number) == 11 and not user[
+            0].phone_validation:
+            rand = id_generator(5, string.digits)
+            send_sms(user[0].phone_number, rand)
+            user[0].phone_random = rand
+            user[0].save()
+            return Response(data, status=status.HTTP_201_CREATED)
+        elif len(user) == 1:
+            if len(user[0].phone_number) != 11:
+                data = {'error': "Phone number problem."}
+                return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+            if len(user[0].phone_validation) != 11:
+                data = {'error': "Phone number is valid."}
+                return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+            data = {'error': "Invalid API."}
+            return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            del data['user_name']
+            del data['api']
+            data['error'] = "Your user not found."
+            return Response(data, status=status.HTTP_404_NOT_FOUND)
+
+
+class SendEmail(generics.CreateAPIView):
+    # queryset = User.objects.all()
+    serializer_class = ShowProfile
+
+    def create(self, request, *args, **kwargs):
+        # print(request.data, file=sys.stderr)
+        data = request.data.copy()
+        if 'csrfmiddlewaretoken' in data.keys():
+            del data['csrfmiddlewaretoken']
+        if 'api' not in data.keys():
+            data = {'error': "Miss API."}
+            return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+        user = User.objects.filter(user_name=data['user_name'])
+        if len(user) == 1 and user[0].api == data['api'] and validate_email(user[0].email) and not user[
+            0].email_validation:
+            rand = id_generator(5, string.digits)
+            send_mail(user[0].email, rand)
+            user[0].email_random = rand
+            user[0].save()
+            return Response(data, status=status.HTTP_201_CREATED)
+        elif len(user) == 1:
+            if not validate_email(user[0].email):
+                data = {'error': "Email problem."}
+                return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+            if len(user[0].email_validation) != 11:
+                data = {'error': "Email is valid."}
+                return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+            data = {'error': "Invalid API."}
+            return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+        else:
             del data['user_name']
             del data['api']
             data['error'] = "Your user not found."

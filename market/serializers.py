@@ -2,10 +2,16 @@ from rest_framework import serializers
 from .models import Market
 
 
-class MarketSerializerForSearch(serializers.ModelSerializer):
+class MarketSerializerForSearchByName(serializers.ModelSerializer):
     class Meta:
         model = Market
         fields = ('market_name',)
+
+
+class MarketSerializerForSearchByAddress(serializers.ModelSerializer):
+    class Meta:
+        model = Market
+        fields = ('address',)
 
 
 class MarketSerializerForAdd(serializers.ModelSerializer):
@@ -24,5 +30,3 @@ class MarketSerializerForID(serializers.ModelSerializer):
     class Meta:
         model = Market
         fields = ('id',)
-
-

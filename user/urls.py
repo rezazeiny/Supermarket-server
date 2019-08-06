@@ -6,7 +6,7 @@ from django.conf import settings
 
 urlpatterns = [
     path('login/username/', views.UserLoginByUsername.as_view()),
-    path('login/email/', views.UserLoginByEmail.as_view()),
+    # path('login/email/', views.UserLoginByEmail.as_view()),
     path('signup/username/', views.UserSignupByUsername.as_view()),
     path('show/profile/', views.ShowProfileUsername.as_view()),
     path('change/profile/', views.ChangeProfilePage.as_view()),
@@ -17,10 +17,10 @@ urlpatterns = [
     # path('forgot/email/', views.ForgotPassEmail.as_view()),
     # path('forgot/phone/', views.ForgotPassPhone.as_view()),
     # path('forgot/change/', views.ForgotPassChange.as_view()),
-    # path('validate/send/phone/', views.SendValidatePhone.as_view()),
-    # path('validate/check/phone/', views.CheckValidatePhone.as_view()),
-    # path('validate/send/email/', views.SendValidateEmail.as_view()),
-    # path('validate/check/email/', views.CheckValidateEmail.as_view()),
+    path('validate/send/phone/', views.SendSMS.as_view()),
+    path('validate/check/phone/', views.CheckValidatePhone.as_view()),
+    path('validate/send/email/', views.SendEmail.as_view()),
+    path('validate/check/email/', views.CheckValidateEmail.as_view()),
 ]
 
 if settings.DEBUG:

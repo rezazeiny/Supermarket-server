@@ -34,6 +34,18 @@ class ChangeProfilePage(serializers.ModelSerializer):
             'user_name', 'email', 'first_name', 'last_name', 'phone_number', 'api')
 
 
+class UserSerializerForCheckValidatePhone(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('user_name', 'phone_random', 'api')
+
+
+class UserSerializerForCheckValidateEmail(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('user_name', 'email_random', 'api')
+
+
 class ProfileSummery(serializers.ModelSerializer):
     class Meta:
         model = User

@@ -222,6 +222,8 @@ class ModelShowDetail(generics.CreateAPIView):
 
             data['market_name'] = model[0].market.market_name
             data['description'] = model[0].description
+            data['price'] = model[0].price
+            data['count'] = model[0].count
             data['image'] = model[0].image.url
             data['owner'] = {
                 'id': model[0].owner.id,
@@ -240,6 +242,7 @@ class ModelShowDetail(generics.CreateAPIView):
                     'id': comments[i].user.id,
                     'user_name': comments[i].user.user_name,
                     'comment': comments[i].comment,
+                    'date': comments[i].register_data,
                 }
                 data['comments'].append(comment)
 

@@ -40,12 +40,39 @@ class MarketAdd(generics.CreateAPIView):
 
 class MarketSearchByName(generics.CreateAPIView):
     # queryset = User.objects.all()
-    serializer_class = MarketSerializerForSearch
+    serializer_class = MarketSerializerForSearchByName
 
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
         print(data, file=sys.stderr)
         markets = Market.objects.filter(market_name__contains=data['market_name'])
+        if 'csrfmiddlewaretoken' in data.keys():
+            del data['csrfmiddlewaretoken']
+        data['markets'] = []
+
+        for i in range(len(markets)):
+            market = {
+                'id': markets[i].id,
+                'market_name': markets[i].market_name,
+                'address': markets[i].address,
+                'image': markets[i].image.url,
+                'rates_result': markets[i].rates_result
+            }
+            data['markets'].append(market)
+            # print(market, file=sys.stderr)
+            # print(type(markets), file=sys.stderr)
+
+        return Response(data, status=status.HTTP_201_CREATED)
+
+
+class MarketSearchByAddress(generics.CreateAPIView):
+    # queryset = User.objects.all()
+    serializer_class = MarketSerializerForSearchByAddress
+
+    def create(self, request, *args, **kwargs):
+        data = request.data.copy()
+        print(data, file=sys.stderr)
+        markets = Market.objects.filter(address__contains=data['address'])
         if 'csrfmiddlewaretoken' in data.keys():
             del data['csrfmiddlewaretoken']
         data['markets'] = []
@@ -196,6 +223,7 @@ class MarketShowComments(generics.CreateAPIView):
                     'id': comments[i].user.id,
                     'user_name': comments[i].user.user_name,
                     'comment': comments[i].comment,
+                    'date': comments[i].register_data,
                 }
                 data['comments'].append(comment)
             return Response(data, status=status.HTTP_201_CREATED)
